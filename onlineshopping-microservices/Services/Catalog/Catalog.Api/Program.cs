@@ -1,4 +1,5 @@
 using Carter;
+using Marten;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,6 +9,11 @@ builder.Services.AddMediatR(config =>
 {
     config.RegisterServicesFromAssembly(typeof(Program).Assembly);
 });
+builder.Services.AddMarten(opt =>
+{
+    opt.Connection(builder.Configuration.GetConnectionString("PostgresConnection")!);
+    opt.AutoCreateSchemaObjects = Weasel.Core.AutoCreate.CreateOrUpdate;
+}).UseLightweightSessions();
 
 var app = builder.Build();
 
