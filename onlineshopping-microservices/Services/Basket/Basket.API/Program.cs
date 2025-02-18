@@ -1,6 +1,7 @@
 using Basket.API.Data;
 using BuildingBlocks.Behaviors;
 using BuildingBlocks.Exceptions.Handler;
+using Microsoft.Extensions.Caching.Distributed;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +22,20 @@ builder.Services.AddMarten(opt =>
 }).UseLightweightSessions();
 
 builder.Services.AddScoped<IBasketRepository, BasketRepository>();
+builder.Services.Decorate<IBasketRepository, CachedBasketRepository>(); // === new CachedBasketRepository(new BasketRepository())
+
+//using scrutor library rather than register decorator class manually
+
+//builder.Services.AddScoped<IBasketRepository>(provider =>
+//{
+//    var basketRepository  = provider.GetRequiredService<BasketRepository>();
+//    return new CachedBasketRepository(basketRepository, provider.GetRequiredService<IDistributedCache>());
+//});
+
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration.GetConnectionString("Redis");
+});
 
 //with using records (Records use constructor-based mapping) - classes with parameterless not need config
 TypeAdapterConfig<StoreBasketResult, StoreBasketResponse>
