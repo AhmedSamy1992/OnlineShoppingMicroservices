@@ -1,10 +1,12 @@
 using Basket.API.Data;
 using BuildingBlocks.Behaviors;
 using BuildingBlocks.Exceptions.Handler;
+using Discount.Grpc;
 using Microsoft.Extensions.Caching.Distributed;
 
 var builder = WebApplication.CreateBuilder(args);
 
+//application services
 builder.Services.AddCarter();
 builder.Services.AddMediatR(config =>
 {
@@ -14,6 +16,7 @@ builder.Services.AddMediatR(config =>
 });
 builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly);
 
+//Data services
 builder.Services.AddMarten(opt =>
 {
     opt.Connection(builder.Configuration.GetConnectionString("PostgresConnection")!);
@@ -42,6 +45,14 @@ TypeAdapterConfig<StoreBasketResult, StoreBasketResponse>
     .NewConfig()
     .MapWith(src => new StoreBasketResponse(src.userName));
 
+
+//Grpc services
+builder.Services.AddGrpcClient<DiscountProtoService.DiscountProtoServiceClient>(options =>
+{
+    options.Address = new Uri(builder.Configuration["GrpcSettings:DiscountUrl"]!);
+});
+
+//cross-cutting concern services
 builder.Services.AddExceptionHandler<CustomExceptionHandler>();
 
 var app = builder.Build();
